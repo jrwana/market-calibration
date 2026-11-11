@@ -147,10 +147,10 @@ pts = base.mark_circle(size=80, opacity=1, stroke="white", strokeWidth=2).encode
 
 left, right = st.columns([3, 2])
 with left:
-    st.altair_chart((diag + band + line + pts).properties(height=460), use_container_width=True)
+    st.altair_chart((diag + band + line + pts).properties(height=460), width="stretch")
 with right:
     st.subheader("Metrics")
-    st.dataframe(summarize(f, 300).set_index("Platform").T, use_container_width=True)
+    st.dataframe(summarize(f, 300).set_index("Platform").T, width="stretch")
     st.caption(
         "95% intervals resample whole events (a ladder of related markets moves together). "
         "BSS compares against always forecasting the group's base rate. Log loss clips "
@@ -163,7 +163,7 @@ show = f.sample(min(200, len(f)), random_state=0)[
 ].rename(columns={"p": "price", "outcome": "resolved YES"})
 st.dataframe(
     show,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     column_config={"price": st.column_config.NumberColumn(format="%.3f")},
 )
