@@ -305,15 +305,16 @@ def compare_llm(con: Any, df: pd.DataFrame) -> list[dict[str, Any]]:
     }
     if "llm_forecasts" not in tables:
         return []
-    llm = con.execute("SELECT source, market_id, p AS p_llm FROM llm_forecasts").df()
+    llm = con.execute("SELECT source, market_id, model, p AS p_llm FROM llm_forecasts").df()
     joined = df.merge(llm, on=["source", "market_id"], how="inner")
     rows: list[dict[str, Any]] = []
-    for (src, h), g in joined.groupby(["source", "horizon"]):
+    for (model, src, h), g in joined.groupby(["model", "source", "horizon"]):
         if len(g) < MIN_GROUP:
             continue
         y, c = g["outcome"].to_numpy(float), g["event_id"].to_numpy()
         pm, pl = g["p"].to_numpy(float), g["p_llm"].to_numpy(float)
         row: dict[str, Any] = {
+            "model": model,
             "source": src,
             "horizon": h,
             "n_markets": len(g),
