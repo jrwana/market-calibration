@@ -106,26 +106,33 @@ class LocalBackend(Backend):
     cutoff_ts = _ts(2024, 7, 1)  # gpt-oss model card: knowledge cutoff June 2024
 
     def __init__(
-        self, endpoint: str | None = None, model: str | None = None, http: Any = None
+        self,
+        endpoint: str | None = None,
+        model: str | None = None,
+        http: Any = None,
+        effort: str = "medium",
     ) -> None:
         self.endpoint = (
             endpoint or os.getenv("LOCAL_LLM_ENDPOINT") or "http://192.168.8.187:8000/v1"
         ).rstrip("/")
-        self.model = model or os.getenv("LOCAL_LLM_MODEL") or "openai/gpt-oss-20b"
+        self.model_id = model or os.getenv("LOCAL_LLM_MODEL") or "openai/gpt-oss-20b"
+        self.effort = effort
+        # The stored/cached name carries the effort: a different setting is a different forecaster.
+        self.model = f"{self.model_id}@{effort}"
         self.http = http or httpx.Client(timeout=300.0)
 
     def ask(self, prompt: str) -> dict[str, Any]:
         resp = self.http.post(
             f"{self.endpoint}/chat/completions",
             json={
-                "model": self.model,
+                "model": self.model_id,
                 "messages": [
                     {"role": "system", "content": SYSTEM},
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0,
                 "max_tokens": 8000,
-                "reasoning_effort": "medium",
+                "reasoning_effort": self.effort,
                 "response_format": {
                     "type": "json_schema",
                     "json_schema": {"name": "forecast", "schema": SCHEMA, "strict": True},
@@ -142,7 +149,7 @@ class LocalBackend(Backend):
             return {"failed": "truncated", "text": text, "finish_reason": "length"}
         return {
             "text": text,
-            "model": d.get("model", self.model),
+            "model": d.get("model", self.model_id),
             "finish_reason": choice.get("finish_reason"),
         }
 
@@ -211,9 +218,9 @@ def forecast_one(
     return LLMForecast(source, market_id, backend.model, PROMPT_VERSION, p, rationale)
 
 
-def make_backend(name: str) -> Backend:
+def make_backend(name: str, effort: str = "medium") -> Backend:
     if name == "local":
-        return LocalBackend()
+        return LocalBackend(effort=effort)
     if name == "claude":
         return ClaudeBackend()
     raise ValueError(f"unknown backend {name!r} (use 'local' or 'claude')")
@@ -279,10 +286,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", default="local", choices=["local", "claude"])
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--effort",
+        default="medium",
+        choices=["low", "medium", "high"],
+        help="local backend reasoning effort",
+    )
     parser.add_argument("--workers", type=int, default=None, help="default: 8 local, 2 claude")
     args = parser.parse_args()
     workers = args.workers or (8 if args.backend == "local" else 2)
-    run(make_backend(args.backend), args.limit, workers)
+    run(make_backend(args.backend, args.effort), args.limit, workers)
 
 
 if __name__ == "__main__":

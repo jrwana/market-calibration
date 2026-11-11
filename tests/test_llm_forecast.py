@@ -131,7 +131,7 @@ def test_failures_are_cached_and_skipped(tmp_path: Path) -> None:
     refused = L.ClaudeBackend(messages=FakeMessages(stop_reason="refusal"))
     assert L.forecast_one(empty, "k", "A", "Q?", 10**9, raw_dir=tmp_path) is None
     assert L.forecast_one(refused, "k", "B", "Q?", 10**9, raw_dir=tmp_path) is None
-    assert L.cache_path("m", "k", "A", tmp_path).exists()
+    assert L.cache_path(empty.model, "k", "A", tmp_path).exists()
 
 
 @pytest.mark.parametrize(("raw", "p"), [(0.42, 0.42), (42, 0.42), (-0.1, 0.0), (1.5, 0.015)])
@@ -145,5 +145,14 @@ def test_truncated_local_answer_is_a_failure(tmp_path: Path) -> None:
         "http://x/v1", "m", FakeHTTP(content='{"probability": 0.', finish="length")
     )
     assert L.forecast_one(cut, "k", "T", "Q?", 10**9, raw_dir=tmp_path) is None
-    stored = json.loads(L.cache_path("m", "k", "T", tmp_path).read_text())
+    stored = json.loads(L.cache_path(cut.model, "k", "T", tmp_path).read_text())
     assert stored["failed"] == "truncated"
+
+
+def test_effort_is_part_of_the_forecaster_identity(tmp_path: Path) -> None:
+    http = FakeHTTP()
+    low = L.LocalBackend("http://x/v1", "openai/gpt-oss-20b", http, effort="low")
+    L.forecast_one(low, "k", "E", "Q?", 10**9, raw_dir=tmp_path)
+    assert http.calls[0]["reasoning_effort"] == "low"
+    assert http.calls[0]["model"] == "openai/gpt-oss-20b"  # the server sees the real model id
+    assert low.model == "openai/gpt-oss-20b@low"  # cache and results keep runs apart
