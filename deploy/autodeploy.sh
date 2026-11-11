@@ -15,7 +15,7 @@ target="$(git rev-parse origin/main)"
 
 repo="$(git remote get-url origin | sed -E 's#(\.git)?$##; s#^.*github\.com[:/]##')"
 checks="$(curl -fsS -H 'Accept: application/vnd.github+json' \
-  "https://api.github.com/repos/$repo/commits/$target/check-runs")"
+  "https://api.github.com/repos/$repo/commits/$target/check-runs?per_page=100")"
 total="$(jq '.total_count' <<<"$checks")"
 pending="$(jq '[.check_runs[] | select(.status != "completed")] | length' <<<"$checks")"
 failed="$(jq '[.check_runs[] | select(.status == "completed" and .conclusion != "success" and .conclusion != "skipped")] | length' <<<"$checks")"
