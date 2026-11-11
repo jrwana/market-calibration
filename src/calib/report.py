@@ -56,7 +56,7 @@ plt.rcParams.update(
         "axes.spines.right": False,
         "font.size": 10,
         "axes.titlesize": 11,
-        "axes.titleweight": "semibold",
+        "axes.titleweight": "bold",
         "legend.frameon": False,
     }
 )
@@ -126,7 +126,7 @@ def _diag(ax: Any) -> None:
 
 
 def fig_reliability(df: pd.DataFrame, path_name: str, title: str) -> None:
-    fig, axes = plt.subplots(1, 3, figsize=(12, 4.3), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(12, 4.8), sharey=True)
     for ax, h in zip(axes, HORIZON_ORDER, strict=True):
         _diag(ax)
         for src in ("kalshi", "polymarket"):
@@ -161,7 +161,7 @@ def fig_reliability(df: pd.DataFrame, path_name: str, title: str) -> None:
         ax.set_xlabel("Market price (implied probability)")
         ax.legend(loc="upper left", fontsize=9)
     axes[0].set_ylabel("Share that resolved YES")
-    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="semibold")
+    fig.suptitle(title, x=0.01, ha="left", fontsize=12, fontweight="bold")
     fig.text(
         0.01,
         0.005,
@@ -170,7 +170,7 @@ def fig_reliability(df: pd.DataFrame, path_name: str, title: str) -> None:
         color=INK_2,
         fontsize=8.5,
     )
-    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.tight_layout(rect=(0, 0.05, 1, 0.97))
     fig.savefig(FIGURES_DIR / path_name, dpi=150)
     plt.close(fig)
 
@@ -205,7 +205,7 @@ def fig_favorite_longshot(df: pd.DataFrame) -> list[dict[str, Any]]:
                 width=width,
                 color=COLORS[src],
                 zorder=3,
-                label=LABELS[src] if k == 0 or not rows or rows[-1]["source"] != src else None,
+                label=LABELS[src],
             )
             ax.vlines(x, e.lo, e.hi, color=INK_2, lw=1.2, zorder=4)
             rows.append(
@@ -233,7 +233,7 @@ def fig_favorite_longshot(df: pd.DataFrame) -> list[dict[str, Any]]:
         color=INK_2,
         fontsize=8.5,
     )
-    fig.tight_layout(rect=(0, 0.03, 1, 1))
+    fig.tight_layout(rect=(0, 0.05, 1, 0.97))
     fig.savefig(FIGURES_DIR / "favorite_longshot.png", dpi=150)
     plt.close(fig)
     return rows
@@ -265,7 +265,7 @@ def fig_breakdown(
                 edgecolor=SURFACE,
                 linewidth=2,
                 zorder=4,
-                label=LABELS[src] if i == 0 else None,
+                label=LABELS[src],
             )
             ax.annotate(
                 f"n={r['n_markets']}",
@@ -281,10 +281,17 @@ def fig_breakdown(
     ax.invert_yaxis()
     ax.grid(axis="y", visible=False)
     ax.set_xlabel("Brier skill score vs. base rate (higher is better; 0 = no skill)")
-    ax.set_title(title, loc="left")
+    ax.set_title(title, loc="left", pad=26)
     handles, labels = ax.get_legend_handles_labels()
     uniq = dict(zip(labels, handles, strict=False))
-    ax.legend(uniq.values(), uniq.keys(), loc="lower right")
+    ax.legend(
+        uniq.values(),
+        uniq.keys(),
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=2,
+        borderaxespad=0,
+    )
     fig.tight_layout()
     fig.savefig(FIGURES_DIR / name, dpi=150)
     plt.close(fig)
