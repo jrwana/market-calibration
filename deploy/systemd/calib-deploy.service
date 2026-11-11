@@ -1,0 +1,9 @@
+[Unit]
+Description=Redeploy market-calibration if main moved and CI passed
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+ExecStart=/srv/calib/deploy/autodeploy.sh

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Deploy (or redeploy) main to the server: pull, write the server's .env, rebuild, restart.
+# First deploy (and manual redeploys): pull main, write the server's .env, rebuild, restart,
+# and install the timer that auto-deploys later commits once CI passes (autodeploy.sh).
 # Usage: deploy/deploy.sh            (reads deploy/deploy.env)
-# CI calls it with DEPLOY_HOST / APP_HOST / APP_PATH already in the environment.
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -31,6 +31,10 @@ umask 077
 printf 'APP_HOST=%s\nAPP_PATH=%s\n' '$APP_HOST' '$APP_PATH' > deploy/.env
 docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build --remove-orphans
 docker image prune -f >/dev/null
+# Install or refresh the pull-based auto-deploy timer.
+sudo install -m 644 deploy/systemd/calib-deploy.service deploy/systemd/calib-deploy.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now calib-deploy.timer >/dev/null
 REMOTE
 
 echo "Live at: https://$APP_HOST/$APP_PATH/"
