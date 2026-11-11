@@ -1,0 +1,8 @@
+# Runtime deps for the hosted dashboard only. It lives next to app.py because Streamlit
+# Community Cloud checks the entrypoint folder first, before the root uv.lock.
+# The full pipeline is installed with `uv sync --all-extras`.
+streamlit>=1.40
+pandas>=2.2
+numpy>=2.0
+pyarrow>=17
+altair>=5

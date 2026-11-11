@@ -1,7 +1,0 @@
-# Runtime deps for the hosted dashboard only (Streamlit Community Cloud reads this file).
-# The full pipeline is installed with `uv sync --all-extras`.
-streamlit>=1.40
-pandas>=2.2
-numpy>=2.0
-pyarrow>=17
-altair>=5
