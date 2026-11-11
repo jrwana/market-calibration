@@ -1,0 +1,44 @@
+name: ci
+
+# Offline checks on a clean checkout. No API calls and no data/: the raw cache and DuckDB file are
+# gitignored, so the one test that reads the real snapshot table skips itself. Everything else
+# (parsers on saved fixtures, leakage properties, metric properties, the LLM client with fakes)
+# runs here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      # --all-extras so the app and LLM modules type-check against their real dependencies.
+      - name: Install
+        run: uv sync --all-extras --frozen
+
+      - name: Lint
+        run: |
+          uv run ruff check src tests app
+          uv run ruff format --check src tests app
+
+      - name: Type check
+        run: uv run mypy
+
+      - name: Test
+        run: uv run pytest
