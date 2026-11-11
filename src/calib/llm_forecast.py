@@ -22,6 +22,7 @@ import argparse
 import hashlib
 import json
 import os
+import random
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -31,7 +32,7 @@ from typing import Any
 import httpx
 
 from calib import db
-from calib.config import RAW_DIR
+from calib.config import RAW_DIR, SEED
 
 
 def _ts(year: int, month: int, day: int) -> int:
@@ -218,7 +219,22 @@ def forecast_one(
     return LLMForecast(source, market_id, backend.model, PROMPT_VERSION, p, rationale)
 
 
-def make_backend(name: str, effort: str = "medium") -> Backend:
+def sample_per_source(rows: list[dict[Any, Any]], n: int, seed: int = SEED) -> list[dict[Any, Any]]:
+    """A seeded random draw of n markets split evenly across platforms. The market sample is
+    already stratified by category, so a uniform draw within each platform keeps that balance.
+    Deliberately not by volume: picking liquid markets would favor the market in the comparison."""
+    rng = random.Random(seed)
+    by_source: dict[str, list[dict[Any, Any]]] = {}
+    for r in sorted(rows, key=lambda r: (str(r["source"]), str(r["market_id"]))):
+        by_source.setdefault(str(r["source"]), []).append(r)
+    per = n // max(1, len(by_source))
+    out: list[dict[Any, Any]] = []
+    for group in by_source.values():
+        out += rng.sample(group, min(per, len(group)))
+    return out
+
+
+def make_backend(name: str, effort: str = "low") -> Backend:
     if name == "local":
         return LocalBackend(effort=effort)
     if name == "claude":
@@ -226,7 +242,7 @@ def make_backend(name: str, effort: str = "medium") -> Backend:
     raise ValueError(f"unknown backend {name!r} (use 'local' or 'claude')")
 
 
-def run(backend: Backend, limit: int | None, workers: int = 1) -> None:
+def run(backend: Backend, limit: int | None, workers: int = 1, sample: int | None = None) -> None:
     con = db.connect()
     markets = con.execute("""
         SELECT DISTINCT m.source, m.market_id, m.title, m.scheduled_close_ts, m.close_ts,
@@ -244,6 +260,8 @@ def run(backend: Backend, limit: int | None, workers: int = 1) -> None:
             backend.cutoff_ts,
         )
     ]
+    if sample:
+        rows = sample_per_source(rows, sample)
     if limit:
         rows = rows[:limit]
     cutoff = datetime.fromtimestamp(backend.cutoff_ts, UTC).date()
@@ -287,6 +305,12 @@ def main() -> None:
     parser.add_argument("--backend", default="local", choices=["local", "claude"])
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument(
+        "--sample",
+        type=int,
+        default=None,
+        help="seeded random markets, split evenly across platforms",
+    )
+    parser.add_argument(
         "--effort",
         default="medium",
         choices=["low", "medium", "high"],
@@ -295,7 +319,7 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=None, help="default: 8 local, 2 claude")
     args = parser.parse_args()
     workers = args.workers or (8 if args.backend == "local" else 2)
-    run(make_backend(args.backend, args.effort), args.limit, workers)
+    run(make_backend(args.backend, args.effort), args.limit, workers, args.sample)
 
 
 if __name__ == "__main__":

@@ -156,3 +156,13 @@ def test_effort_is_part_of_the_forecaster_identity(tmp_path: Path) -> None:
     assert http.calls[0]["reasoning_effort"] == "low"
     assert http.calls[0]["model"] == "openai/gpt-oss-20b"  # the server sees the real model id
     assert low.model == "openai/gpt-oss-20b@low"  # cache and results keep runs apart
+
+
+def test_sample_is_seeded_and_balanced() -> None:
+    rows = [
+        {"source": s, "market_id": f"{s}{i}"} for s in ("kalshi", "polymarket") for i in range(50)
+    ]
+    a = L.sample_per_source(rows, 20)
+    b = L.sample_per_source(list(reversed(rows)), 20)
+    assert a == b
+    assert sum(r["source"] == "kalshi" for r in a) == 10
