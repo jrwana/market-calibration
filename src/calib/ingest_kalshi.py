@@ -11,6 +11,9 @@ from collections import defaultdict
 from collections.abc import Iterator
 from datetime import datetime
 from typing import Any
+from urllib.parse import quote
+
+import httpx
 
 from calib import db
 from calib.categories import kalshi_category
@@ -181,10 +184,12 @@ def fetch_series_markets(client: CachedClient, series_ticker: str) -> list[dict[
 def fetch_candles(
     client: CachedClient, market: Market, series_ticker: str, historical: bool
 ) -> list[dict[str, Any]]:
+    # Some tickers contain "/" (e.g. GTEMP-24-1.02/23); encode them or the path splits.
+    ticker = quote(market.market_id, safe="")
     path = (
-        f"/historical/markets/{market.market_id}/candlesticks"
+        f"/historical/markets/{ticker}/candlesticks"
         if historical
-        else f"/series/{series_ticker}/markets/{market.market_id}/candlesticks"
+        else f"/series/{quote(series_ticker, safe='')}/markets/{ticker}/candlesticks"
     )
     candles: list[dict[str, Any]] = []
     start = market.open_ts
@@ -241,9 +246,13 @@ def run(target: int) -> None:
     kept: list[Market] = []
     for i, m in enumerate(markets, 1):
         historical = (m.resolved_ts or m.close_ts) < cutoff
-        rows = parse_candles(
-            m.market_id, fetch_candles(client, m, series_of[m.market_id], historical)
-        )
+        try:
+            candles = fetch_candles(client, m, series_of[m.market_id], historical)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code != 404:
+                raise
+            candles = []  # the API has no candles for this ticker: logged as no_price_history
+        rows = parse_candles(m.market_id, candles)
         if rows:
             kept.append(m)
             prices += rows
