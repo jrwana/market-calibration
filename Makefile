@@ -30,4 +30,4 @@ app:
 all: data snapshots eval
 
 llm:
-	$(UV) python -m calib.llm_forecast
+	$(UV) python -m calib.llm_forecast --backend local
