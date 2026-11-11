@@ -1,0 +1,57 @@
+{
+ "markets": [
+  {
+   "ticker": "KXSP500REMOVEQ-26OCT01-TTD",
+   "event_ticker": "KXSP500REMOVEQ-26OCT01",
+   "market_type": "binary",
+   "result": "yes",
+   "status": "finalized",
+   "open_time": "2026-07-02T03:00:00Z",
+   "close_time": "2026-09-08T19:40:44Z",
+   "expected_expiration_time": "2026-10-01T14:00:00Z",
+   "settlement_ts": "2026-09-08T20:10:45.532985Z",
+   "title": "Will The Trade Desk be removed from the S&P 500 in Q3 2026?",
+   "can_close_early": true
+  },
+  {
+   "ticker": "KXSP500REMOVEQ-26OCT01-SOLV",
+   "event_ticker": "KXSP500REMOVEQ-26OCT01",
+   "market_type": "binary",
+   "result": "no",
+   "status": "finalized",
+   "open_time": "2026-07-02T03:00:00Z",
+   "close_time": "2026-10-01T14:00:00Z",
+   "expected_expiration_time": "2026-10-01T14:00:00Z",
+   "settlement_ts": "2026-10-01T19:20:33.964971Z",
+   "title": "Will Solventum Corporation be removed from the S&P 500 in Q3 2026?",
+   "can_close_early": true
+  },
+  {
+   "ticker": "KXMVECROSSCATEGORY-S2026X-1",
+   "event_ticker": "KXMVECROSSCATEGORY-S2026X",
+   "market_type": "binary",
+   "result": "yes",
+   "status": "finalized",
+   "open_time": "2026-07-02T03:00:00Z",
+   "close_time": "2026-09-08T19:40:44Z",
+   "expected_expiration_time": "2026-10-01T14:00:00Z",
+   "settlement_ts": "2026-09-08T20:10:45.532985Z",
+   "title": "Will The Trade Desk be removed from the S&P 500 in Q3 2026?",
+   "can_close_early": true,
+   "mve_collection_ticker": "KXMVECROSSCATEGORY-R"
+  },
+  {
+   "ticker": "KXSP500REMOVEQ-26OCT01-TTD-VOID",
+   "event_ticker": "KXSP500REMOVEQ-26OCT01",
+   "market_type": "binary",
+   "result": "",
+   "status": "finalized",
+   "open_time": "2026-07-02T03:00:00Z",
+   "close_time": "2026-09-08T19:40:44Z",
+   "expected_expiration_time": "2026-10-01T14:00:00Z",
+   "settlement_ts": "2026-09-08T20:10:45.532985Z",
+   "title": "Will The Trade Desk be removed from the S&P 500 in Q3 2026?",
+   "can_close_early": true
+  }
+ ]
+}

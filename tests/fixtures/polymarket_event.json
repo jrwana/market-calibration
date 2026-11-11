@@ -1,0 +1,92 @@
+{
+ "id": "192501",
+ "title": "Dota 2: Yakutou Brothers vs Roar Gaming (BO1) - ESL Challenger China Playoffs",
+ "tags": [
+  {
+   "slug": "esports",
+   "label": "Esports"
+  },
+  {
+   "slug": "dota-2",
+   "label": "Dota 2"
+  },
+  {
+   "slug": "games",
+   "label": "Games"
+  },
+  {
+   "slug": "sports",
+   "label": "Sports"
+  }
+ ],
+ "series": [
+  {
+   "id": "10309",
+   "ticker": "dota-2",
+   "slug": "dota-2",
+   "title": "Dota 2",
+   "seriesType": "single",
+   "recurrence": "daily",
+   "image": "",
+   "icon": "",
+   "active": true,
+   "closed": false,
+   "archived": false,
+   "featured": false,
+   "restricted": true,
+   "createdAt": "2025-09-18T23:42:30.845055Z",
+   "updatedAt": "2026-11-11T17:48:01.78752Z",
+   "volume24hr": 6714726.165434001,
+   "volume": 4524329.955465,
+   "liquidity": 967285.38547,
+   "commentCount": 3443
+  }
+ ],
+ "markets": [
+  {
+   "id": "1292766",
+   "conditionId": "0xd5d03bb08eab43cb0661c9b0fc3e8fe415a573cff157c58728a4be9ddd5e9014",
+   "question": "Dota 2: Yakutou Brothers vs Roar Gaming (BO1) - ESL Challenger China Playoffs",
+   "outcomes": "[\"Yakutou Brothers\", \"Roar Gaming\"]",
+   "outcomePrices": "[\"0\", \"1\"]",
+   "clobTokenIds": "[\"44195723659959256533073486947246868172013222459588622394419668326815605805600\", \"39304994641239517466163580723267179064505345649838835921769717121217315992811\"]",
+   "umaResolutionStatus": "resolved",
+   "closed": true,
+   "automaticallyResolved": true,
+   "startDate": "2026-01-29T14:02:47.459006Z",
+   "endDate": "2026-01-30T12:10:00Z",
+   "closedTime": "2026-01-30 09:39:40+00",
+   "umaEndDate": "2026-01-30T09:39:40Z"
+  },
+  {
+   "id": "1292766",
+   "conditionId": "0xhalf",
+   "question": "Dota 2: Yakutou Brothers vs Roar Gaming (BO1) - ESL Challenger China Playoffs",
+   "outcomes": "[\"Yakutou Brothers\", \"Roar Gaming\"]",
+   "outcomePrices": "[\"0.5\", \"0.5\"]",
+   "clobTokenIds": "[\"44195723659959256533073486947246868172013222459588622394419668326815605805600\", \"39304994641239517466163580723267179064505345649838835921769717121217315992811\"]",
+   "umaResolutionStatus": "resolved",
+   "closed": true,
+   "automaticallyResolved": true,
+   "startDate": "2026-01-29T14:02:47.459006Z",
+   "endDate": "2026-01-30T12:10:00Z",
+   "closedTime": "2026-01-30 09:39:40+00",
+   "umaEndDate": "2026-01-30T09:39:40Z"
+  },
+  {
+   "id": "1292766",
+   "conditionId": "0xpending",
+   "question": "Dota 2: Yakutou Brothers vs Roar Gaming (BO1) - ESL Challenger China Playoffs",
+   "outcomes": "[\"Yakutou Brothers\", \"Roar Gaming\"]",
+   "outcomePrices": "[\"0\", \"1\"]",
+   "clobTokenIds": "[\"44195723659959256533073486947246868172013222459588622394419668326815605805600\", \"39304994641239517466163580723267179064505345649838835921769717121217315992811\"]",
+   "umaResolutionStatus": "disputed",
+   "closed": true,
+   "automaticallyResolved": true,
+   "startDate": "2026-01-29T14:02:47.459006Z",
+   "endDate": "2026-01-30T12:10:00Z",
+   "closedTime": "2026-01-30 09:39:40+00",
+   "umaEndDate": "2026-01-30T09:39:40Z"
+  }
+ ]
+}
