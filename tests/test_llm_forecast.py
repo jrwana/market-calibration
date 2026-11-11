@@ -30,15 +30,15 @@ class FakeMessages:
 class FakeHTTP:
     """Stands in for httpx.Client against a vLLM OpenAI-compatible server."""
 
-    def __init__(self, content: str | None = ANSWER) -> None:
+    def __init__(self, content: str | None = ANSWER, finish: str = "stop") -> None:
         self.calls: list[dict[str, Any]] = []
-        self.content = content
+        self.content, self.finish = content, finish
 
     def post(self, url: str, json: dict[str, Any]) -> Any:
         self.calls.append({"url": url, **json})
         body = {
             "model": json["model"],
-            "choices": [{"message": {"content": self.content}, "finish_reason": "stop"}],
+            "choices": [{"message": {"content": self.content}, "finish_reason": self.finish}],
         }
         return SimpleNamespace(raise_for_status=lambda: None, json=lambda: body)
 
@@ -138,3 +138,12 @@ def test_failures_are_cached_and_skipped(tmp_path: Path) -> None:
 def test_parse_clips_and_tolerates_percentages(raw: float, p: float) -> None:
     got, _ = L.parse_response({"text": json.dumps({"probability": raw, "rationale": ""})})
     assert got == pytest.approx(p)
+
+
+def test_truncated_local_answer_is_a_failure(tmp_path: Path) -> None:
+    cut = L.LocalBackend(
+        "http://x/v1", "m", FakeHTTP(content='{"probability": 0.', finish="length")
+    )
+    assert L.forecast_one(cut, "k", "T", "Q?", 10**9, raw_dir=tmp_path) is None
+    stored = json.loads(L.cache_path("m", "k", "T", tmp_path).read_text())
+    assert stored["failed"] == "truncated"

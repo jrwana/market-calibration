@@ -38,7 +38,7 @@ def _ts(year: int, month: int, day: int) -> int:
     return int(datetime(year, month, day, tzinfo=UTC).timestamp())
 
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"  # v2: 8k token ceiling; truncated answers recorded as failures
 SYSTEM = (
     "You are a careful forecaster. Estimate the probability that a prediction-market question "
     "resolves YES. You have no access to news or prices; reason from base rates and what you know. "
@@ -124,7 +124,7 @@ class LocalBackend(Backend):
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": 0,
-                "max_tokens": 4000,
+                "max_tokens": 8000,
                 "reasoning_effort": "medium",
                 "response_format": {
                     "type": "json_schema",
@@ -138,6 +138,8 @@ class LocalBackend(Backend):
         text = (choice["message"].get("content") or "").strip()
         if not text:  # a reasoning model that hit the token ceiling mid-thought
             return {"failed": "empty_content", "finish_reason": choice.get("finish_reason")}
+        if choice.get("finish_reason") == "length":  # JSON cut off mid-answer
+            return {"failed": "truncated", "text": text, "finish_reason": "length"}
         return {
             "text": text,
             "model": d.get("model", self.model),
