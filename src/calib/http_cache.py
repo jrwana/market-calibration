@@ -1,8 +1,8 @@
 """A polite, cached JSON client.
 
-Every response is written to ``data/raw/<source>/<route>/<hash>.json`` before it is used, and a cached
-response is never re-requested. That makes ingestion resumable (kill it, rerun it) and idempotent
-(the same request always maps to the same file).
+Every response is written to ``data/raw/<source>/<route>/<hash>.json`` before it is used, and a
+cached response is never re-requested. That makes ingestion resumable (kill it, rerun it) and
+idempotent (the same request always maps to the same file).
 """
 
 from __future__ import annotations

@@ -88,6 +88,13 @@ def parse_market(raw: dict[str, Any], series: dict[str, Any]) -> Market | Exclus
     )
 
 
+def in_window(raw: dict[str, Any]) -> bool:
+    """Is the market's scheduled close inside the study window? Applied before parsing so exclusion
+    counts describe the same frame the sample is drawn from."""
+    ts = parse_ts(raw.get("expected_expiration_time")) or parse_ts(raw.get("close_time"))
+    return ts is not None and WINDOW_START_TS <= ts < WINDOW_END_TS
+
+
 def _ohlc(block: dict[str, Any] | None, field: str) -> float | None:
     """Live candles use ``close_dollars``; historical ones use ``close``."""
     if not block:
@@ -110,7 +117,9 @@ def parse_candles(market_id: str, candles: list[dict[str, Any]]) -> list[Price]:
         ask = _ohlc(c.get("yes_ask"), "close")
         if bid is not None and ask is not None and 0.0 < bid <= ask < 1.0:
             rows.append(
-                Price(SOURCE, market_id, ts, (bid + ask) / 2, "mid", volume_cum, round(ask - bid, 4))
+                Price(
+                    SOURCE, market_id, ts, (bid + ask) / 2, "mid", volume_cum, round(ask - bid, 4)
+                )
             )
         trade = _ohlc(c.get("price"), "close")
         if trade is not None:
@@ -155,7 +164,9 @@ def iter_pages(client: CachedClient, path: str, params: dict[str, Any], key: str
 def fetch_series_markets(client: CachedClient, series_ticker: str) -> list[dict[str, Any]]:
     """Settled markets for a series from both the live and the historical tier."""
     live = iter_pages(
-        client, "/markets", {"series_ticker": series_ticker, "status": "settled", "limit": 1000},
+        client,
+        "/markets",
+        {"series_ticker": series_ticker, "status": "settled", "limit": 1000},
         "markets",
     )
     hist = iter_pages(
@@ -214,17 +225,12 @@ def run(target: int) -> None:
         for series in pool[:MAX_SERIES_PER_CATEGORY]:
             if got >= per_category:
                 break
-            parsed = [parse_market(r, series) for r in fetch_series_markets(client, series["ticker"])]
-            in_window = [
-                p for p in parsed
-                if isinstance(p, Exclusion)
-                or WINDOW_START_TS <= p.scheduled_close_ts < WINDOW_END_TS
-            ]
-            clean = [p for p in in_window if isinstance(p, Market)]
+            raws = [r for r in fetch_series_markets(client, series["ticker"]) if in_window(r)]
+            parsed = [parse_market(r, series) for r in raws]
+            exclusions += [p for p in parsed if isinstance(p, Exclusion)]
+            clean = [p for p in parsed if isinstance(p, Market)]
             chosen = sample_events(clean, rng, MAX_EVENTS_PER_SERIES, MAX_MARKETS_PER_EVENT)
             chosen = chosen[: per_category - got]
-            events = {m.event_id for m in chosen}
-            exclusions += [x for x in in_window if isinstance(x, Exclusion) and x.event_id in events]
             for m in chosen:
                 series_of[m.market_id] = series["ticker"]
             markets += chosen
@@ -235,14 +241,18 @@ def run(target: int) -> None:
     kept: list[Market] = []
     for i, m in enumerate(markets, 1):
         historical = (m.resolved_ts or m.close_ts) < cutoff
-        rows = parse_candles(m.market_id, fetch_candles(client, m, series_of[m.market_id], historical))
+        rows = parse_candles(
+            m.market_id, fetch_candles(client, m, series_of[m.market_id], historical)
+        )
         if rows:
             kept.append(m)
             prices += rows
         else:
             exclusions.append(Exclusion(SOURCE, m.market_id, m.event_id, "no_price_history"))
         if i % 100 == 0:
-            print(f"  candles {i}/{len(markets)} (cache hits {client.hits}, fetched {client.misses})")
+            print(
+                f"  candles {i}/{len(markets)} (cache hits {client.hits}, fetched {client.misses})"
+            )
 
     coverage = [VolumeCoverage(SOURCE, m.market_id, True, m.open_ts) for m in kept]
     con = db.connect()

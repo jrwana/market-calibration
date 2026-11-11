@@ -1,4 +1,7 @@
-"""DuckDB schema and writers. Each ingest run replaces its own source's rows, so reruns are idempotent."""
+"""DuckDB schema and writers.
+
+Each ingest run replaces its own source's rows, so reruns are idempotent.
+"""
 
 from __future__ import annotations
 
