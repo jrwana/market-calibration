@@ -30,7 +30,7 @@ SOURCE = "kalshi"
 BASE_URL = "https://api.elections.kalshi.com/trade-api/v2"
 MAX_CANDLES_PER_REQUEST = 5000
 MAX_PAGES_PER_LISTING = 3
-MAX_SERIES_PER_CATEGORY = 600
+MAX_SERIES_PER_CATEGORY = 2500
 
 
 # ---------------------------------------------------------------- parsing (pure, fixture-tested)
