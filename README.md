@@ -138,6 +138,26 @@ The raw API cache (`data/`) isn't committed. `make data` rebuilds it, and every 
 a rerun makes no new requests. The dashboard reads only `app/data/snapshots.parquet`, so it also
 runs from a fresh clone (`docker build -t calib . && docker run -p 8501:8501 calib`).
 
+## Deploy
+
+The dashboard runs on one AWS Lightsail instance. Everything is in the repo:
+
+| Piece | Where | What it does |
+|---|---|---|
+| Infrastructure | [`infra/terraform/`](infra/terraform) | Instance, static IP, firewall (SSH only from `admin_cidrs`). First boot installs Docker. |
+| Serving | [`deploy/compose.yml`](deploy/compose.yml), [`deploy/Caddyfile`](deploy/Caddyfile) | Streamlit behind Caddy: automatic HTTPS, an unlisted path, 404 elsewhere, `noindex`. |
+| CI | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | Lint, type check and tests on every push. |
+| CD | [`deploy/autodeploy.sh`](deploy/autodeploy.sh) + a systemd timer | The server pulls `main` every 5 minutes and redeploys only if CI passed on that commit. Pull-based, so SSH never opens to CI runners and no deploy key lives in GitHub. |
+
+```bash
+cd infra/terraform && cp terraform.tfvars.example terraform.tfvars   # set admin_cidrs
+terraform init && terraform apply                                     # ~$5/month
+cp deploy/deploy.env.example deploy/deploy.env                        # IP + hostname from outputs
+deploy/deploy.sh                                                      # first deploy; prints the URL
+```
+
+The URL path and hostname live only in `deploy/deploy.env` (gitignored) and on the server.
+
 ## Layout
 
 ```
@@ -148,6 +168,7 @@ src/calib/
   report.py                                # scorecard + figures
   llm_forecast.py                          # optional LLM baseline
 app/app.py                                 # dashboard
+infra/terraform/, deploy/                  # AWS infrastructure and serving config
 tests/                                     # fixtures, leakage + metric property tests
 ```
 
@@ -157,6 +178,6 @@ tests/                                     # fixtures, leakage + metric property
 - [x] Data pipeline
 - [x] Leak-free snapshots and leakage tests
 - [x] Metrics and scorecard
-- [x] Dashboard
+- [x] Dashboard, CI, and Terraform + Caddy deploy config (server not yet provisioned)
 - [x] Results (5,241 markets) and LLM baseline (1,000 markets)
 - [x] Blog post draft ([docs/blog_post.md](docs/blog_post.md))
