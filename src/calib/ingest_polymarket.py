@@ -17,6 +17,7 @@ from calib.categories import polymarket_category
 from calib.config import (
     CATEGORIES,
     DAY,
+    HOUR,
     MAX_MARKETS_PER_EVENT,
     SEED,
     WINDOW_END_TS,
@@ -31,7 +32,7 @@ GAMMA_URL = "https://gamma-api.polymarket.com"
 DATA_URL = "https://data-api.polymarket.com/v2"
 HISTORY_BUCKET_SECONDS = 10800  # 3h: the finest width the API serves for a market's whole life
 EVENTS_PAGE = 100
-MAX_EVENT_PAGES_PER_DAY = 40
+MAX_EVENT_PAGES_PER_WINDOW = 20  # 20 x 100 = Gamma's offset ceiling
 MAX_TRADE_PAGES = 50  # 50k trades; beyond this, pre-snapshot volume is only a lower bound
 MAX_EVENTS_PER_DAY_PER_CATEGORY = 2
 
@@ -161,26 +162,34 @@ def parse_trades(market_id: str, trades: list[dict[str, Any]], yes_token: str) -
 
 
 def fetch_day_events(gamma: CachedClient, day_start: int) -> list[dict[str, Any]]:
-    """All closed events whose scheduled end falls on one UTC day."""
-    lo = datetime.fromtimestamp(day_start, UTC).strftime("%Y-%m-%d")
-    hi = datetime.fromtimestamp(day_start + DAY, UTC).strftime("%Y-%m-%d")
-    events: list[dict[str, Any]] = []
-    for page in range(MAX_EVENT_PAGES_PER_DAY):
-        batch = gamma.get_json(
-            "/events",
-            {
-                "closed": "true",
-                "end_date_min": lo,
-                "end_date_max": hi,
-                "limit": EVENTS_PAGE,
-                "offset": page * EVENTS_PAGE,
-                "order": "id",
-            },
+    """All closed events whose scheduled end falls on one UTC day.
+
+    Gamma rejects offsets past ~2000 and busy days exceed that, so the day is paged in one-hour
+    windows. Window bounds are inclusive, so events are de-duplicated by id.
+    """
+    events: dict[str, dict[str, Any]] = {}
+    for hour in range(24):
+        lo = datetime.fromtimestamp(day_start + hour * HOUR, UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        hi = datetime.fromtimestamp(day_start + (hour + 1) * HOUR - 1, UTC).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
         )
-        events.extend(batch)
-        if len(batch) < EVENTS_PAGE:
-            break
-    return events
+        for page in range(MAX_EVENT_PAGES_PER_WINDOW):
+            batch = gamma.get_json(
+                "/events",
+                {
+                    "closed": "true",
+                    "end_date_min": lo,
+                    "end_date_max": hi,
+                    "limit": EVENTS_PAGE,
+                    "offset": page * EVENTS_PAGE,
+                    "order": "id",
+                },
+            )
+            for e in batch:
+                events.setdefault(str(e["id"]), e)
+            if len(batch) < EVENTS_PAGE:
+                break
+    return [events[k] for k in sorted(events)]
 
 
 def fetch_trades(data: CachedClient, condition_id: str) -> tuple[list[dict[str, Any]], bool]:
