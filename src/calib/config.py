@@ -41,8 +41,8 @@ LIQUIDITY_LABELS: tuple[str, ...] = ("<1k", "1k-10k", "10k-100k", ">=100k")
 
 # Sampling.
 SEED = 20261111
-MAX_MARKETS_PER_EVENT = 5
-MAX_EVENTS_PER_SERIES = 3
+MAX_MARKETS_PER_EVENT = 3
+MAX_EVENTS_PER_SERIES = 2
 
 # Unified categories shared by both platforms.
 CATEGORIES: tuple[str, ...] = (
