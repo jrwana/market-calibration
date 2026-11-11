@@ -290,6 +290,41 @@ def fig_breakdown(
     plt.close(fig)
 
 
+def compare_llm(con: Any, df: pd.DataFrame) -> list[dict[str, Any]]:
+    """Market vs. LLM vs. their average, on the same markets, plus the paired Brier difference
+    (market minus LLM; negative = market better) with an event-clustered CI."""
+    tables = {
+        r[0] for r in con.execute("SELECT table_name FROM information_schema.tables").fetchall()
+    }
+    if "llm_forecasts" not in tables:
+        return []
+    llm = con.execute("SELECT source, market_id, p AS p_llm FROM llm_forecasts").df()
+    joined = df.merge(llm, on=["source", "market_id"], how="inner")
+    rows: list[dict[str, Any]] = []
+    for (src, h), g in joined.groupby(["source", "horizon"]):
+        if len(g) < MIN_GROUP:
+            continue
+        y, c = g["outcome"].to_numpy(float), g["event_id"].to_numpy()
+        pm, pl = g["p"].to_numpy(float), g["p_llm"].to_numpy(float)
+        row: dict[str, Any] = {
+            "source": src,
+            "horizon": h,
+            "n_markets": len(g),
+            "n_events": int(np.unique(c).size),
+        }
+        for name, p in (("market", pm), ("llm", pl), ("ensemble", (pm + pl) / 2)):
+            for metric, fn in (("brier", M.brier), ("log_loss", M.log_loss), ("ece", M.ece)):
+                e = M.cluster_bootstrap(fn, p, y, c, n_boot=N_BOOT // 2, seed=SEED)
+                row[f"{name}_{metric}"] = {"value": e.point, "ci95": [e.lo, e.hi]}
+        d = (pm - y) ** 2 - (pl - y) ** 2
+        e = M.cluster_bootstrap(
+            lambda a, _b: float(a.mean()), d, np.zeros_like(d), c, n_boot=N_BOOT, seed=SEED
+        )
+        row["brier_diff_market_minus_llm"] = {"value": e.point, "ci95": [e.lo, e.hi]}
+        rows.append(row)
+    return rows
+
+
 # ---------------------------------------------------------------- main
 
 
@@ -301,8 +336,9 @@ def main() -> None:
     drops = con.execute("""
         SELECT source, horizon, reason, count(*) AS n FROM snapshot_drops GROUP BY ALL
     """).df()
-    con.close()
 
+    llm_rows = compare_llm(con, df)
+    con.close()
     fixed = df[df.all_horizons]
     ope = one_per_event(df)
     scorecard: dict[str, Any] = {
@@ -320,6 +356,7 @@ def main() -> None:
         "by_liquidity": grouped(df, ["source", "horizon", "liquidity"]),
         "by_price_type": grouped(df, ["source", "horizon", "price_type"]),
         "snapshot_drops": drops.to_dict("records"),
+        "llm_comparison": llm_rows,
     }
 
     fig_reliability(df, "reliability.png", "Reliability by platform and horizon (all snapshots)")
