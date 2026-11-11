@@ -1,5 +1,5 @@
 # Raw API cache and the DuckDB file are rebuilt by `make data`; too large for git.
-data/
+/data/
 .env
 .venv/
 __pycache__/
