@@ -15,3 +15,5 @@ __pycache__/
 *.tfstate
 *.tfstate.*
 terraform.tfvars
+deploy/.env
+deploy/deploy.env

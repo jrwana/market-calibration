@@ -1,0 +1,35 @@
+# The dashboard behind Caddy. Values come from deploy/.env, which deploy.sh writes on the server
+# and which is never committed:
+#   APP_HOST  hostname for HTTPS (a domain, or <ip-with-dashes>.sslip.io)
+#   APP_PATH  random path segment the app is served under; everything else returns 404
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    environment:
+      STREAMLIT_SERVER_BASE_URL_PATH: ${APP_PATH:?set APP_PATH in deploy/.env}
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+    expose:
+      - "8501"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_HOST: ${APP_HOST:?set APP_HOST in deploy/.env}
+      APP_PATH: ${APP_PATH}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,27 @@
+# HTTPS is automatic (Let's Encrypt). The app lives only under /APP_PATH/; the root and any other
+# path return 404, so finding the server's address reveals nothing.
+{$APP_HOST} {
+	encode gzip
+
+	# Ask search engines not to index anything, even if the link is posted somewhere public.
+	header {
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		-Server
+	}
+
+	handle /robots.txt {
+		respond `User-agent: *
+Disallow: /
+` 200
+	}
+
+	redir /{$APP_PATH} /{$APP_PATH}/ 308
+
+	handle /{$APP_PATH}/* {
+		reverse_proxy app:8501
+	}
+
+	handle {
+		respond 404
+	}
+}
