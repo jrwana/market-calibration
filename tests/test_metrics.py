@@ -141,7 +141,9 @@ def test_murphy_identity(py: tuple[np.ndarray, np.ndarray], n_bins: int) -> None
     """BS = REL - RES + UNC + WBV - WBC, exactly (Stephenson et al., 2008)."""
     p, y = py
     d = M.murphy(p, y, n_bins=n_bins)
-    rebuilt = d.reliability - d.resolution + d.uncertainty + d.within_bin_variance - d.within_bin_cov
+    rebuilt = (
+        d.reliability - d.resolution + d.uncertainty + d.within_bin_variance - d.within_bin_cov
+    )
     assert rebuilt == pytest.approx(M.brier(p, y), abs=1e-10)
     assert d.reliability >= 0 and d.resolution >= 0 and d.uncertainty >= 0
 

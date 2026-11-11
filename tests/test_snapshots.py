@@ -184,7 +184,9 @@ def test_snapshot_table_has_no_leakage() -> None:
     n = con.execute("SELECT count(*) FROM snapshots").fetchone()
     if not n or n[0] == 0:
         pytest.skip("snapshots table is empty")
-    bad_price = con.execute("SELECT count(*) FROM snapshots WHERE price_ts > snapshot_ts").fetchone()
+    bad_price = con.execute(
+        "SELECT count(*) FROM snapshots WHERE price_ts > snapshot_ts"
+    ).fetchone()
     bad_anchor = con.execute("""
         SELECT count(*) FROM snapshots s JOIN markets m USING (source, market_id)
         WHERE s.snapshot_ts >= m.close_ts OR s.snapshot_ts < m.open_ts
