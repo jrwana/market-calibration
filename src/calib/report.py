@@ -333,6 +333,58 @@ def compare_llm(con: Any, df: pd.DataFrame) -> list[dict[str, Any]]:
     return rows
 
 
+def fig_llm(rows: list[dict[str, Any]]) -> None:
+    """Brier score of market, LLM and their average, per platform and horizon (lower is better)."""
+    if not rows:
+        return
+    rows = sorted(rows, key=lambda r: (r["source"], HORIZON_ORDER.index(r["horizon"])))
+    kinds = [
+        ("market", "Market price", INK),
+        ("llm", "LLM (question + date only)", "#6250d6"),
+        ("ensemble", "Average of the two", "#1baf7a"),
+    ]
+    labels = [f"{LABELS[r['source']]} {r['horizon']}" for r in rows]
+    fig, ax = plt.subplots(figsize=(8, 0.55 * len(rows) + 1.6))
+    for j, (key, name, color) in enumerate(kinds):
+        for i, r in enumerate(rows):
+            e = r[f"{key}_brier"]
+            yv = i + (j - 1) * 0.24
+            ax.hlines(yv, e["ci95"][0], e["ci95"][1], color=color, lw=2, zorder=3)
+            ax.scatter(
+                e["value"],
+                yv,
+                s=36,
+                color=color,
+                edgecolor=SURFACE,
+                linewidth=2,
+                zorder=4,
+                label=name,
+            )
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels(
+        [f"{lab}  (n={r['n_markets']})" for lab, r in zip(labels, rows, strict=True)]
+    )
+    ax.invert_yaxis()
+    ax.grid(axis="y", visible=False)
+    ax.set_xlim(left=0)
+    ax.set_xlabel("Brier score (lower is better), 95% event-clustered CI")
+    ax.set_title("Market vs. an LLM forecaster on the same markets", loc="left", pad=26)
+    handles, labs = ax.get_legend_handles_labels()
+    uniq = dict(zip(labs, handles, strict=False))
+    ax.legend(
+        uniq.values(),
+        uniq.keys(),
+        loc="lower left",
+        bbox_to_anchor=(0, 1.02),
+        ncol=3,
+        borderaxespad=0,
+        fontsize=9,
+    )
+    fig.tight_layout()
+    fig.savefig(FIGURES_DIR / "llm_vs_market.png", dpi=150)
+    plt.close(fig)
+
+
 # ---------------------------------------------------------------- main
 
 
@@ -386,6 +438,7 @@ def main() -> None:
         "Skill by volume traded before the snapshot (T-7d)",
     )
 
+    fig_llm(llm_rows)
     (REPORTS_DIR / "scorecard.json").write_text(json.dumps(scorecard, indent=2, default=float))
     export = df[
         [
