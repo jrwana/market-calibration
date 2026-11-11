@@ -159,4 +159,4 @@ tests/                                     # fixtures, leakage + metric property
 - [x] Metrics and scorecard
 - [x] Dashboard
 - [x] Results (5,241 markets) and LLM baseline (1,000 markets)
-- [ ] Blog post (draft in progress)
+- [x] Blog post draft ([docs/blog_post.md](docs/blog_post.md))
