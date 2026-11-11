@@ -1,0 +1,21 @@
+#!/bin/bash
+# First-boot setup. Logs to /var/log/cloud-init-output.log.
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y docker.io docker-compose-v2 git unattended-upgrades
+systemctl enable --now docker
+usermod -aG docker ubuntu
+
+# Security patches install themselves.
+dpkg-reconfigure -f noninteractive unattended-upgrades
+
+# A little swap so a pip install during a rebuild can't OOM a 1 GB box.
+if [ ! -f /swapfile ]; then
+  fallocate -l 1G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+  echo '/swapfile none swap sw 0 0' >> /etc/fstab
+fi
+
+install -d -o ubuntu -g ubuntu /srv/calib
+sudo -u ubuntu git clone ${repo_url} /srv/calib

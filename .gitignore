@@ -9,3 +9,9 @@ __pycache__/
 .pytest_cache/
 .hypothesis/
 .DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
