@@ -26,8 +26,8 @@ treat that column as indicative.
 
 **What the data supports**
 
-- **Prices behave like probabilities.** Miscalibration (the Murphy reliability term, ≤0.003) is a
-  small slice of the Brier score; almost all of the score is irreducible uncertainty minus
+- **Prices behave like probabilities.** Miscalibration (the Murphy reliability term, ≤0.003
+  everywhere except the thin Polymarket T-30d cell) is a small slice of the Brier score; almost all of the score is irreducible uncertainty minus
   resolution. Results hold with one market per event and on the fixed population.
 - **Markets get sharper, not more calibrated, as resolution nears.** On Kalshi markets priced at all
   three horizons, skill climbs from +0.39 at T-30d to +0.72 at T-7d and +0.84 at T-1d while
