@@ -1,4 +1,4 @@
-.PHONY: setup data snapshots eval test lint app all
+.PHONY: setup data snapshots eval test lint app llm all
 
 UV := uv run
 
@@ -28,3 +28,6 @@ app:
 	$(UV) streamlit run app/app.py
 
 all: data snapshots eval
+
+llm:
+	$(UV) python -m calib.llm_forecast
