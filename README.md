@@ -151,7 +151,7 @@ The dashboard runs on one AWS Lightsail instance. Everything is in the repo:
 
 ```bash
 cd infra/terraform && cp terraform.tfvars.example terraform.tfvars   # set admin_cidrs
-terraform init && terraform apply                                     # ~$5/month
+terraform init && terraform apply                                     # $7/month (1 GB)
 cp deploy/deploy.env.example deploy/deploy.env                        # IP + hostname from outputs
 deploy/deploy.sh                                                      # first deploy; prints the URL
 ```
@@ -178,6 +178,6 @@ tests/                                     # fixtures, leakage + metric property
 - [x] Data pipeline
 - [x] Leak-free snapshots and leakage tests
 - [x] Metrics and scorecard
-- [x] Dashboard, CI, and Terraform + Caddy deploy config (server not yet provisioned)
+- [x] Dashboard, CI, and deployment (live on Lightsail; auto-deploys from main when CI passes)
 - [x] Results (5,241 markets) and LLM baseline (1,000 markets)
 - [x] Blog post draft ([docs/blog_post.md](docs/blog_post.md))
