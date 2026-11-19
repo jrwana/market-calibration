@@ -1,6 +1,7 @@
-#!/bin/bash
 # First-boot setup. Logs to /var/log/cloud-init-output.log.
-set -euo pipefail
+# POSIX sh on purpose: Lightsail prepends its own #!/bin/sh block to user_data, so a bash
+# shebang here is ignored and bash-only options (pipefail) abort the script.
+set -eu
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update

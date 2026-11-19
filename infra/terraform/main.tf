@@ -30,11 +30,22 @@ resource "aws_lightsail_static_ip" "app" {
 resource "aws_lightsail_static_ip_attachment" "app" {
   static_ip_name = aws_lightsail_static_ip.app.name
   instance_name  = aws_lightsail_instance.app.name
+
+  # The instance is referenced by name, which survives a replacement, so without this Terraform
+  # would keep believing the IP is attached to the instance it just deleted.
+  lifecycle {
+    replace_triggered_by = [aws_lightsail_instance.app.id]
+  }
 }
 
 # Replaces Lightsail's default firewall (which leaves SSH open to everyone).
 resource "aws_lightsail_instance_public_ports" "app" {
   instance_name = aws_lightsail_instance.app.name
+
+  # Same reason as the IP attachment: a new instance starts with the default (open SSH) firewall.
+  lifecycle {
+    replace_triggered_by = [aws_lightsail_instance.app.id]
+  }
 
   port_info {
     protocol  = "tcp"
