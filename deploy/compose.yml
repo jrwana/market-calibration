@@ -2,6 +2,11 @@
 # and which is never committed:
 #   APP_HOST  hostname for HTTPS (a domain, or <ip-with-dashes>.sslip.io)
 #   APP_PATH  random path segment the app is served under; everything else returns 404
+
+# Explicit, because every project on this server keeps its compose file in a folder named
+# deploy/, and the default project name (the folder) would make them clean up each other.
+name: market-calibration
+
 services:
   app:
     build:
@@ -41,5 +46,9 @@ networks:
     name: edge
 
 volumes:
+  # Named to keep the volumes created before the project had an explicit name (and with them
+  # the issued HTTPS certificate).
   caddy_data:
+    name: deploy_caddy_data
   caddy_config:
+    name: deploy_caddy_config
