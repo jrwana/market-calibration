@@ -24,6 +24,7 @@ fi
 
 ssh -o StrictHostKeyChecking=accept-new "ubuntu@$DEPLOY_HOST" bash -s <<REMOTE
 set -euo pipefail
+sudo install -d -o ubuntu -g ubuntu /srv/caddy-sites
 cd /srv/calib
 git fetch -q origin main
 git reset -q --hard origin/main

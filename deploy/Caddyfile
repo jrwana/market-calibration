@@ -21,6 +21,10 @@ Disallow: /
 		reverse_proxy app:8501
 	}
 
+	# Routes for other apps on this server, each under its own unlisted path. The snippets are
+	# written on the server by those projects' deploy scripts, so their paths stay out of git.
+	import /etc/caddy/sites/*.caddy
+
 	handle {
 		respond 404
 	}

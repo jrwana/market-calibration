@@ -26,9 +26,19 @@ services:
       APP_PATH: ${APP_PATH}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Other projects on this server drop a route snippet here (see the Caddyfile's import).
+      - /srv/caddy-sites:/etc/caddy/sites:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - default
+      - edge
     restart: unless-stopped
+
+# Shared with other projects' compose files so Caddy can reach their containers by name.
+networks:
+  edge:
+    name: edge
 
 volumes:
   caddy_data:
